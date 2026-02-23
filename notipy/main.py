@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import sys
 
 import argparse
@@ -77,7 +78,7 @@ def main() -> None:
     if not command_parts:
         parser.error("No command provided. Example: notipy -- sleep 5")
 
-    command_str = " ".join(command_parts)
+    command_str = shlex.join(command_parts)
 
     # ── Run ───────────────────────────────────────────────────────────────────
     print(f"[notipy] Running: {command_str}", flush=True)
