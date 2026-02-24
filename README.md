@@ -1,15 +1,17 @@
 # notipy
 
-> Wrap any shell command and get an **email notification with logs** when it finishes.
+> Wrap any shell command and get a **push notification** when it finishes.
 
-```
+```bash
 notipy -- python train.py --epochs 100
 ```
 
-When the command completes you receive an email with:
-- Subject: `notipy: 'python train.py --epochs 100' ✅ done`  (or ❌ failed)
-- Body: host, command, exit status
-- Attachment: `logs.txt` — full stdout + stderr
+When the command completes you receive a push notification on your phone / browser with:
+- Title: `✅ 'python train.py --epochs 100' done` (or ❌ failed)
+- Body: hostname, full stdout + stderr (truncated at 4 KB if needed)
+
+**No account. No credentials. No setup.**  
+Notifications are delivered by [ntfy.sh](https://ntfy.sh), a free open-source push notification service.
 
 ---
 
@@ -35,17 +37,24 @@ After installation the `notipy` command is available globally.
 
 ## Quick start
 
-```bash
-# 1. Set SMTP credentials (see "SMTP setup" below)
-export NOTIPY_SMTP_USER="you@gmail.com"
-export NOTIPY_SMTP_PASS="your-app-password"
+**1. Subscribe to the notipy topic**
 
-# 2. Set the default recipient
-export NOTIPY_EMAIL_ADDR="you@example.com"
+Install the [ntfy app](https://ntfy.sh/#subscribe-phone) (Android / iOS / web) and subscribe to the topic:
 
-# 3. Run something
-notipy -- sleep 10
 ```
+gasparyanartur-notipy-public
+```
+
+Or open it in a browser: https://ntfy.sh/gasparyanartur-notipy-public
+
+**2. Run anything**
+
+```bash
+notipy -- sleep 10
+notipy -- python train.py --epochs 100
+```
+
+That's it.
 
 ---
 
@@ -57,21 +66,21 @@ notipy [OPTIONS] -- COMMAND [ARGS…]
 
 | Option | Description |
 |---|---|
-| `--to / -t ADDRESS` | Recipient address (overrides `NOTIPY_EMAIL_ADDR`) |
-| `--subject / -s TEXT` | Custom email subject (auto-generated if omitted) |
-| `--no-mail` | Run the command but skip sending the email |
+| `--topic / -t TOPIC` | ntfy.sh topic (overrides `NOTIPY_TOPIC`, default: `gasparyanartur-notipy-public`) |
+| `--no-notify` | Run the command but skip sending the notification |
 
 ### Examples
 
 ```bash
-# Use --to to override the env-var recipient
-notipy --to boss@company.com -- make build
+# Use a private topic
+notipy --topic my-secret-topic-abc123 -- make build
 
-# Custom subject
-notipy --subject "Training run done" -- python train.py
+# Override via env var
+export NOTIPY_TOPIC="my-secret-topic-abc123"
+notipy -- python train.py
 
-# Test without sending mail
-notipy --no-mail -- echo hello
+# Test without notifying
+notipy --no-notify -- echo hello
 
 # Arguments that look like flags are safe after --
 notipy -- python train.py --lr 0.001 --epochs 50
@@ -81,62 +90,27 @@ notipy -- python train.py --lr 0.001 --epochs 50
 
 ## Environment variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `NOTIPY_EMAIL_ADDR` | ✅ (or `--to`) | — | Recipient email address |
-| `NOTIPY_SMTP_USER` | ✅ | — | SMTP login username (also the sender) |
-| `NOTIPY_SMTP_PASS` | ✅ | — | SMTP password or app-password |
-| `NOTIPY_SMTP_HOST` | ❌ | `smtp.gmail.com` | SMTP server hostname |
-| `NOTIPY_SMTP_PORT` | ❌ | `587` | SMTP port (STARTTLS) |
-| `NOTIPY_FROM_ADDR` | ❌ | `NOTIPY_SMTP_USER` | Override the From address |
-
-Add these to your `~/.bashrc` or `~/.zshrc` to make them permanent:
-
-```bash
-export NOTIPY_SMTP_USER="you@gmail.com"
-export NOTIPY_SMTP_PASS="xxxx xxxx xxxx xxxx"   # app password
-export NOTIPY_EMAIL_ADDR="you@example.com"
-```
-
----
-
-## SMTP setup
-
-### Gmail (recommended)
-
-Gmail requires an **App Password** when 2-Step Verification is enabled (regular passwords won't work).
-
-1. Go to **Google Account → Security → 2-Step Verification** and enable it.
-2. Go to **Google Account → Security → App passwords**.
-3. Select app: *Mail*, device: *Other (custom name)*, enter `notipy`.
-4. Copy the 16-character password and set `NOTIPY_SMTP_PASS` to it.
-
-```bash
-export NOTIPY_SMTP_USER="you@gmail.com"
-export NOTIPY_SMTP_PASS="abcd efgh ijkl mnop"
-```
-
-### Other providers
-
-| Provider | `NOTIPY_SMTP_HOST` | `NOTIPY_SMTP_PORT` |
+| Variable | Default | Description |
 |---|---|---|
-| Gmail | `smtp.gmail.com` | `587` |
-| Outlook / Hotmail | `smtp-mail.outlook.com` | `587` |
-| Yahoo Mail | `smtp.mail.yahoo.com` | `587` |
-| Fastmail | `smtp.fastmail.com` | `587` |
-| SendGrid | `smtp.sendgrid.net` | `587` |
-| Custom / self-hosted | your server | `587` |
+| `NOTIPY_TOPIC` | `gasparyanartur-notipy-public` | ntfy.sh topic to publish to |
+
+To use a private topic, set it in `~/.bashrc` or `~/.zshrc`:
+
+```bash
+export NOTIPY_TOPIC="my-secret-topic-abc123"
+```
+
+Pick any long random string — topic names are the only form of access control on the public ntfy.sh server.  
+For full privacy you can [self-host ntfy](https://docs.ntfy.sh/install/).
 
 ---
 
 ## How it works
 
-1. `notipy` launches your command in a bash shell via `subprocess.Popen`.
+1. `notipy` launches your command in a shell via `subprocess.Popen`.
 2. stdout and stderr are **tee'd** — forwarded to your terminal in real time *and* captured concurrently using two daemon threads.
-3. After the process exits, a MIME email is built:
-   - Plain-text body with host, command, and exit status.
-   - `logs.txt` attachment containing full stdout + stderr.
-4. The email is sent over STARTTLS SMTP and `notipy` exits with the **same exit code** as the wrapped command.
+3. After the process exits, a plain-text notification is `POST`ed to `https://ntfy.sh/<topic>` using Python's built-in `urllib` (zero external dependencies).
+4. `notipy` exits with the **same exit code** as the wrapped command.
 
 ---
 
