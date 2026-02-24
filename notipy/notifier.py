@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import http.client
+import json
 import os
 import socket
-import urllib.request
-from urllib.error import URLError
+import ssl
 
 from notipy.runner import RunResult
 
@@ -13,7 +14,7 @@ from notipy.runner import RunResult
 
 ENV_TOPIC = "NOTIPY_TOPIC"
 DEFAULT_TOPIC = "gasparyanartur-notipy-public"
-NTFY_BASE_URL = "https://ntfy.sh"
+NTFY_HOST = "ntfy.sh"
 
 # ntfy message body cap (server enforces 4096 bytes)
 _MAX_BODY = 4000
@@ -37,7 +38,7 @@ def _build_body(result: RunResult) -> str:
 
 
 def send_notification(result: RunResult, topic: str | None = None) -> None:
-    """POST a notification to ntfy.sh/<topic>.
+    """POST a notification to ntfy.sh.
 
     Topic resolution order
     ----------------------
@@ -47,26 +48,30 @@ def send_notification(result: RunResult, topic: str | None = None) -> None:
     """
     resolved_topic = topic or os.environ.get(ENV_TOPIC) or DEFAULT_TOPIC
 
-    url = f"{NTFY_BASE_URL}/{resolved_topic}"
-    body = _build_body(result).encode("utf-8")
-    tags = "white_check_mark" if result.succeeded else "x"
+    tags = ["white_check_mark"] if result.succeeded else ["x"]
+    payload = {
+        "topic": resolved_topic,
+        "title": _build_title(result),
+        "message": _build_body(result),
+        "tags": tags,
+    }
+    encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
-    req = urllib.request.Request(
-        url,
-        data=body,
-        headers={
-            "Title": _build_title(result),
-            "Tags": tags,
-            "Priority": "default",
-            "Content-Type": "text/plain; charset=utf-8",
-        },
-        method="POST",
-    )
-
+    ctx = ssl.create_default_context()
+    conn = http.client.HTTPSConnection(NTFY_HOST, context=ctx, timeout=30)
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            resp.read()
-    except URLError as exc:
-        raise RuntimeError(
-            f"Failed to reach ntfy server at {url}: {exc.reason}"
-        ) from exc
+        conn.request(
+            "POST",
+            "/",
+            body=encoded,
+            headers={"Content-Type": "application/json"},
+        )
+        resp = conn.getresponse()
+        body = resp.read()
+        if resp.status >= 400:
+            raise RuntimeError(
+                f"ntfy server returned HTTP {resp.status}: "
+                f"{body.decode('utf-8', errors='replace')}"
+            )
+    finally:
+        conn.close()
