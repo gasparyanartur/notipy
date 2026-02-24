@@ -13,7 +13,7 @@ from notipy.runner import RunResult
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 ENV_ADDR = "NOTIPY_ADDR"
-DEFAULT_ADDR = "gasparyanartur-public"
+DEFAULT_ADDR = "default-public"
 NTFY_HOST = "ntfy.sh"
 
 # ntfy message body cap (server enforces 4096 bytes)

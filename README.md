@@ -105,7 +105,7 @@ notipy -- python train.py --lr 0.001 --epochs 50
 
 | Variable | Default | Description |
 |---|---|---|
-| `NOTIPY_ADDR` | `gasparyanartur-public` | Address suffix used to build the ntfy topic `notipy-<addr>` |
+| `NOTIPY_ADDR` | `default-public` | Address suffix used to build the ntfy topic `notipy-<addr>` |
 
 ### Setting `NOTIPY_ADDR`
 
