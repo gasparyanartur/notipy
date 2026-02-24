@@ -12,8 +12,8 @@ from notipy.runner import RunResult
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-ENV_TOPIC = "NOTIPY_TOPIC"
-DEFAULT_TOPIC = "gasparyanartur-notipy-public"
+ENV_ADDR = "NOTIPY_ADDR"
+DEFAULT_ADDR = "gasparyanartur-public"
 NTFY_HOST = "ntfy.sh"
 
 # ntfy message body cap (server enforces 4096 bytes)
@@ -37,16 +37,19 @@ def _build_body(result: RunResult) -> str:
     return header + log
 
 
-def send_notification(result: RunResult, topic: str | None = None) -> None:
+def send_notification(result: RunResult, addr: str | None = None) -> None:
     """POST a notification to ntfy.sh.
 
-    Topic resolution order
-    ----------------------
-    1. *topic* argument
-    2. ``NOTIPY_TOPIC`` environment variable
-    3. Built-in default (``gasparyanartur-notipy-public``)
+    Address resolution order
+    ------------------------
+    1. *addr* argument
+    2. ``NOTIPY_ADDR`` environment variable
+    3. Built-in default (``gasparyanartur-public``)
+
+    The ntfy topic is constructed as ``notipy-{addr}``.
     """
-    resolved_topic = topic or os.environ.get(ENV_TOPIC) or DEFAULT_TOPIC
+    resolved_addr = addr or os.environ.get(ENV_ADDR) or DEFAULT_ADDR
+    resolved_topic = f"notipy-{resolved_addr}"
 
     tags = ["white_check_mark"] if result.succeeded else ["x"]
     payload = {

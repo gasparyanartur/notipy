@@ -37,17 +37,28 @@ After installation the `notipy` command is available globally.
 
 ## Quick start
 
-**1. Subscribe to the notipy topic**
+**1. Choose your address and set it**
 
-Install the [ntfy app](https://ntfy.sh/#subscribe-phone) (Android / iOS / web) and subscribe to the topic:
+Pick any unique string as your address (e.g. your name, a random token). Add it to `~/.bashrc` or `~/.zshrc`:
+
+```bash
+echo 'export NOTIPY_ADDR="yourname-abc123"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Or put it in a per-project `.env` file (see [Environment variables](#environment-variables) for how to load it).
+
+**2. Subscribe to your topic**
+
+Your ntfy topic is `notipy-<your-addr>`. Install the [ntfy app](https://ntfy.sh/#subscribe-phone) (Android / iOS / web) and subscribe to:
 
 ```
-gasparyanartur-notipy-public
+notipy-yourname-abc123
 ```
 
-Or open it in a browser: https://ntfy.sh/gasparyanartur-notipy-public
+Or open it in a browser: `https://ntfy.sh/notipy-yourname-abc123`
 
-**2. Run anything**
+**3. Run anything**
 
 ```bash
 notipy -- sleep 10
@@ -66,17 +77,17 @@ notipy [OPTIONS] -- COMMAND [ARGS…]
 
 | Option | Description |
 |---|---|
-| `--topic / -t TOPIC` | ntfy.sh topic (overrides `NOTIPY_TOPIC`, default: `gasparyanartur-notipy-public`) |
+| `--addr / -a ADDR` | Address suffix; the ntfy topic becomes `notipy-<addr>` (overrides `NOTIPY_ADDR`) |
 | `--no-notify` | Run the command but skip sending the notification |
 
 ### Examples
 
 ```bash
-# Use a private topic
-notipy --topic my-secret-topic-abc123 -- make build
+# Use a private address
+notipy --addr my-secret-abc123 -- make build
 
 # Override via env var
-export NOTIPY_TOPIC="my-secret-topic-abc123"
+export NOTIPY_ADDR="my-secret-abc123"
 notipy -- python train.py
 
 # Test without notifying
@@ -92,15 +103,36 @@ notipy -- python train.py --lr 0.001 --epochs 50
 
 | Variable | Default | Description |
 |---|---|---|
-| `NOTIPY_TOPIC` | `gasparyanartur-notipy-public` | ntfy.sh topic to publish to |
+| `NOTIPY_ADDR` | `gasparyanartur-public` | Address suffix used to build the ntfy topic `notipy-<addr>` |
 
-To use a private topic, set it in `~/.bashrc` or `~/.zshrc`:
+### Setting `NOTIPY_ADDR`
+
+**Option 1 — `~/.bashrc` / `~/.zshrc`** (persists for all shell sessions):
 
 ```bash
-export NOTIPY_TOPIC="my-secret-topic-abc123"
+echo 'export NOTIPY_ADDR="my-secret-abc123"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-Pick any long random string — topic names are the only form of access control on the public ntfy.sh server.  
+**Option 2 — `.env` file** (per-project, load with a tool like [`dotenv`](https://github.com/theskumar/python-dotenv) or [`direnv`](https://direnv.net/)):
+
+```bash
+# .env
+NOTIPY_ADDR=my-secret-abc123
+```
+
+Then load it before running notipy:
+
+```bash
+# with direnv (auto-loads .env when you cd into the directory)
+direnv allow
+
+# or manually
+set -a && source .env && set +a
+notipy -- python train.py
+```
+
+Pick a sufficiently unique string as your address — topic names are the only form of access control on the public ntfy.sh server.  
 For full privacy you can [self-host ntfy](https://docs.ntfy.sh/install/).
 
 ---
@@ -109,7 +141,7 @@ For full privacy you can [self-host ntfy](https://docs.ntfy.sh/install/).
 
 1. `notipy` launches your command in a shell via `subprocess.Popen`.
 2. stdout and stderr are **tee'd** — forwarded to your terminal in real time *and* captured concurrently using two daemon threads.
-3. After the process exits, a plain-text notification is `POST`ed to `https://ntfy.sh/<topic>` using Python's built-in `urllib` (zero external dependencies).
+3. After the process exits, a plain-text notification is `POST`ed to `https://ntfy.sh/` (with the topic embedded in the JSON body) using Python's built-in `http.client` (zero external dependencies).
 4. `notipy` exits with the **same exit code** as the wrapped command.
 
 ---

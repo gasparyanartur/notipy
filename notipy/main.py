@@ -8,7 +8,7 @@ import sys
 import argparse
 
 from notipy.runner import run_command
-from notipy.notifier import send_notification, DEFAULT_TOPIC, ENV_TOPIC
+from notipy.notifier import send_notification, DEFAULT_ADDR, ENV_ADDR
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,13 +22,13 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--topic", "-t",
-        dest="topic",
-        metavar="TOPIC",
+        "--addr", "-a",
+        dest="addr",
+        metavar="ADDR",
         default=None,
         help=(
-            f"ntfy.sh topic to publish to. "
-            f"Falls back to {ENV_TOPIC} env var, then '{DEFAULT_TOPIC}'."
+            f"Address suffix for the ntfy.sh topic 'notipy-<addr>'. "
+            f"Falls back to {ENV_ADDR} env var, then '{DEFAULT_ADDR}'."
         ),
     )
     parser.add_argument(
@@ -51,8 +51,9 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    # ── Resolve topic ─────────────────────────────────────────────────────────
-    topic = args.topic or os.environ.get(ENV_TOPIC) or DEFAULT_TOPIC
+    # ── Resolve address ───────────────────────────────────────────────────────
+    addr = args.addr or os.environ.get(ENV_ADDR) or DEFAULT_ADDR
+    topic = f"notipy-{addr}"
 
     # ── Resolve command ───────────────────────────────────────────────────────
     command_parts: list[str] = args.command
@@ -76,7 +77,7 @@ def main() -> None:
     if not args.no_notify:
         print(f"[notipy] Sending notification to ntfy.sh/{topic} …", flush=True)
         try:
-            send_notification(result=result, topic=topic)
+            send_notification(result=result, addr=addr)
             print("[notipy] Notification sent.", flush=True)
         except Exception as exc:  # noqa: BLE001
             print(f"[notipy] WARNING: failed to send notification: {exc}", file=sys.stderr)
