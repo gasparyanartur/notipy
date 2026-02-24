@@ -24,17 +24,18 @@ def _build_title(result: RunResult) -> str:
     icon = "✅" if result.succeeded else "❌"
     cmd = result.command if len(result.command) <= 60 else result.command[:57] + "..."
     suffix = "done" if result.succeeded else f"failed (exit {result.returncode})"
-    return f"{icon} {cmd!r} {suffix}"
+    return f"{icon} {cmd!r} {suffix} ({result.duration:.1f}s)"
 
 
 def _build_body(result: RunResult) -> str:
     hostname = socket.gethostname()
     log = result.combined_log()
     header = f"Host: {hostname}\n\n"
-    available = _MAX_BODY - len(header)
-    if len(log) > available:
-        log = log[:available - 22] + "\n\n... (output truncated)"
-    return header + log
+    body = header + log
+    if len(body) > _MAX_BODY:
+        keep = _MAX_BODY - len(header) - 24
+        body = header + log[:keep] + "\n\n... (output truncated)"
+    return body
 
 
 def send_notification(result: RunResult, addr: str | None = None) -> None:
