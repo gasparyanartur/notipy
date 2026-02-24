@@ -13,6 +13,8 @@ When the command completes you receive a push notification on your phone / brows
 **No account. No credentials. No setup.**  
 Notifications are delivered by [ntfy.sh](https://ntfy.sh), a free open-source push notification service.
 
+**Note**: `notipy` is a personal project I threw together with Claude. It's not intended for production use or as a general-purpose notification library. Use at your own risk. Please do not spam the public ntfy.sh server with high-frequency notifications, as that will get this project blocked 😟
+
 ---
 
 ## Installation
@@ -20,7 +22,7 @@ Notifications are delivered by [ntfy.sh](https://ntfy.sh), a free open-source pu
 ### pip (from GitHub)
 
 ```bash
-pip install git+https://github.com/<you>/notipy.git
+pip install git+https://github.com/gasparyanartur/notipy.git
 ```
 
 ### Editable / development install
