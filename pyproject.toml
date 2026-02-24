@@ -8,11 +8,11 @@ version = "0.1.0"
 authors = [
     { name = "Artur Gasparyan", email = "gasparyanartur99@gmail.com" }
 ]
-description = "Wrap any shell command and get an email notification with logs when it finishes"
+description = "Wrap any shell command and get a push notification via ntfy.sh when it finishes"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
-keywords = ["notification", "email", "cli", "automation"]
+keywords = ["notification", "ntfy", "push", "cli", "automation"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

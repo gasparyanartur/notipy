@@ -9,6 +9,7 @@ import argparse
 
 from notipy.runner import run_command
 from notipy.notifier import send_notification, DEFAULT_ADDR, ENV_ADDR
+from notipy import __version__
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -21,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "--addr", "-a",
         dest="addr",
