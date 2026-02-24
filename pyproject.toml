@@ -5,6 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "notipy"
 version = "0.1.0"
+authors = [
+    { name = "Artur Gasparyan", email = "gasparyanartur99@gmail.com" }
+]
 description = "Wrap any shell command and get an email notification with logs when it finishes"
 readme = "README.md"
 requires-python = ">=3.8"
